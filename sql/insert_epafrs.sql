@@ -1,0 +1,30 @@
+INSERT or Ignore INTO EPAFRS (
+                       RegistryID,
+                       Title,
+                       Coordinates,
+                       Address,
+                       City,
+                       State,
+                       County,
+                       Link,
+                       Latitude,
+                       Longitude,
+                       HDatum,
+                       CollectionMethod,
+                       EmptyLink
+                   )
+                   VALUES (
+                       :RegistryID,
+                       :Title,
+                       :Coordinates,
+                       :Address,
+                       :City,
+                       :State,
+                       :County,
+                       :Link,
+                       :Latitude,
+                       :Longitude,
+                       :HDatum,
+                       :CollectionMethod,
+                       :EmptyLink
+                   );

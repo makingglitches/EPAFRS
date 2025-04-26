@@ -203,6 +203,10 @@ def waitAndResubmit(jobs:list[concurrent.futures.Future],
     created = 0
     errored = 0
 
+    # what this is designed to do is limit the number of concurrently queued jobs
+    # which causes execution of job queuing to pause until the number of Future's objects
+    # has been reduced to below a specified limit.
+    # setting 0 causes it to continue to hold until ALL jobs have finished.
     while len(jobs) > until:
 
         retjob = []    
@@ -232,9 +236,11 @@ def waitAndResubmit(jobs:list[concurrent.futures.Future],
         if len(retjob) > 0:
             time.sleep(2.0)
 
+        # reschedule failed jobs, the only reason these should fail is network issues.
+        # like throttling is most common.
         for ret in retjob:
             time.sleep(1.0)
-            fut = exec.submit(ProcessFRSAsync,res['facility'], res['url'], res['registryid'],res['recordexists'])
+            fut = exec.submit(ProcessFRSAsync,ret['facility'], ret['url'], ret['registryid'],ret['recordexists'])
             jobs.append(fut)
 
         if len(jobs) > until:

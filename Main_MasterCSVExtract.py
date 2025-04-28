@@ -25,6 +25,15 @@ insepaprogam = u.readall('sql/insert_epaprograms.sql')
 getinterestid = u.readall('sql/select_epainterestid.sql')
 insepainterest = u.readall('sql/insert_epainterests.sql')
 
+def pad(spaces:int)->str:
+    s = ""
+
+    for i in range(spaces+1):
+        s=s+" "
+    
+    return s
+
+
 def ProcessFRSAsync(facility:dict,url:str, registryid:str, recexists:bool) -> dict:
     html = wgetwrapper.fetch_html_with_wget(url)
     
@@ -202,6 +211,9 @@ def waitAndResubmit(jobs:list[concurrent.futures.Future],
     updated = 0
     created = 0
     errored = 0
+    terror = 0
+
+    cycles = 0
 
     # what this is designed to do is limit the number of concurrently queued jobs
     # which causes execution of job queuing to pause until the number of Future's objects
@@ -218,33 +230,44 @@ def waitAndResubmit(jobs:list[concurrent.futures.Future],
             if job.done():
                 donejobs.append(job)
         
+        if len(donejobs) == 0:
+            cycles = cycles + 1
+        else:
+            cycles = 0
+
         # handle finished jobs, no waiting on running jobs, should accomplish task faster
-        for job in donejobs:
+        for job in donejobs:            
             jobs.remove(job)
             res = job.result()
 
             if res['error']:
                 #print(f'job failed: {res}')
                 errored = errored + 1
+                terror = terror + (0 if res['returncode'] != 255 else 1)
                 retjob.append(res)
             else:
                 cr,up = performDatabaseJob(res['facility'], res['url'], res['registryid'], res['frs_table'], res['programs_table'], res['recordexists'])
                 updated = updated  + up
                 created = created + cr
 
+        if len(donejobs) > 5 or cycles==20:
+            print(f'Queue Management: e:{errored} t:{terror} j:{len(jobs)} ' + pad(35), end="\r")
+            cycles = 0
+
         #delay resubmission a second.
-        if len(retjob) > 0:
-            time.sleep(2.0)
+        #if len(retjob) > 0:
+        #    time.sleep(2.0)
 
         # reschedule failed jobs, the only reason these should fail is network issues.
         # like throttling is most common.
+        #         
         for ret in retjob:
-            time.sleep(1.0)
+        #    time.sleep(1.0)
             fut = exec.submit(ProcessFRSAsync,ret['facility'], ret['url'], ret['registryid'],ret['recordexists'])
             jobs.append(fut)
 
         if len(jobs) > until:
-            time.sleep(1.0)
+            time.sleep(0.050)
         
     return (jobs, created,updated,errored)
 

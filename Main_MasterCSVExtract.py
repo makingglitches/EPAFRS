@@ -214,6 +214,8 @@ def waitAndResubmit(jobs:list[concurrent.futures.Future],
     terror = 0
 
     cycles = 0
+    
+    stallmessage = False
 
     # what this is designed to do is limit the number of concurrently queued jobs
     # which causes execution of job queuing to pause until the number of Future's objects
@@ -229,11 +231,8 @@ def waitAndResubmit(jobs:list[concurrent.futures.Future],
         for job in jobs:
             if job.done():
                 donejobs.append(job)
-        
-        if len(donejobs) == 0:
-            cycles = cycles + 1
-        else:
-            cycles = 0
+    
+        cycles = cycles + 1
 
         # handle finished jobs, no waiting on running jobs, should accomplish task faster
         for job in donejobs:            
@@ -250,26 +249,25 @@ def waitAndResubmit(jobs:list[concurrent.futures.Future],
                 updated = updated  + up
                 created = created + cr
 
-        if len(donejobs) > 5 or cycles==20:
-            print(f'Queue Management: e:{errored} t:{terror} j:{len(jobs)} ' + pad(35), end="\r")
-            cycles = 0
+        if len(donejobs) > 5 or cycles>=20:
+        
+            if not stallmessage:
+                print()
+                stallmessage = True
+            	            
+            print(f"STALLED FOR {0.05*cycles:.3f}s  to:{terror}"+pad(10), end="\r")
 
-        #delay resubmission a second.
-        #if len(retjob) > 0:
-        #    time.sleep(2.0)
-
-        # reschedule failed jobs, the only reason these should fail is network issues.
-        # like throttling is most common.
-        #         
         for ret in retjob:
-        #    time.sleep(1.0)
             fut = exec.submit(ProcessFRSAsync,ret['facility'], ret['url'], ret['registryid'],ret['recordexists'])
             jobs.append(fut)
 
         if len(jobs) > until:
             time.sleep(0.050)
-        
-    return (jobs, created,updated,errored)
+    
+    if stallmessage:
+        print()
+    
+    return (jobs, created,updated,errored, terror, cycles*0.05)
 
 def GrabEPAData(csvname, skipExisting=True,jobLimit=12)->tuple[int,int,int]:
 

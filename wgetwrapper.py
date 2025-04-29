@@ -4,7 +4,7 @@ import time
 # https://www.gnu.org/software/wget/manual/html_node/Exit-Status.html
 
 
-def fetch_html_with_wget(url,dltimeout=5, jobtimeout=10)->dict:
+def fetch_html_with_wget(url,dltimeout=5, tries = 2, jobtimeout=10)->dict:
 
     started = time.time()
 
@@ -16,7 +16,7 @@ def fetch_html_with_wget(url,dltimeout=5, jobtimeout=10)->dict:
             '-T',
             str(dltimeout), 
             '-t', 
-            '2', 
+            tries, 
             '-U', 
             'Mozilla/5.0 (X11; U; Linux i686 (x86_64); en-GB; rv:1.9.0.1) Gecko/2008070206 Firefox/3.0.1', 
             "-qO-", 

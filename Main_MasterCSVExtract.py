@@ -365,11 +365,14 @@ SkipExtract = True
 #Limit the number of concurrent wget connectins
 jobLimit = 2
 
+# To allow skipping of files to make the process start faster
+startatkmz = 1
+
 # Limit the number of queued items
 queueLimit = 100
 
 # create the kmz file list to process, EPA has 10 regions presently.
-for i in range(1,11):
+for i in range(startatkmz,11):
     files.append(f'input/region_{i:02d}.kmz')
                  
 # process the compressed kmz, create csv files, add to file csvlist.

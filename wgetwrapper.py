@@ -1,15 +1,20 @@
 import subprocess
+import time
 
 # https://www.gnu.org/software/wget/manual/html_node/Exit-Status.html
 
 
-def fetch_html_with_wget(url,timeout=5)->dict:
+def fetch_html_with_wget(url,dltimeout=5, jobtimeout=10)->dict:
 
-    try:
+    started = time.time()
+
+    res = {}
+
+    try:        
         result = subprocess.run(
             ["wget",
             '-T',
-            str(timeout), 
+            str(dltimeout), 
             '-t', 
             '2', 
             '-U', 
@@ -18,15 +23,21 @@ def fetch_html_with_wget(url,timeout=5)->dict:
             url],  # -q = quiet, -O- = output to stdout
             capture_output=True,
             text=True,
-            timeout=10.0
+            timeout=jobtimeout
         )
         # gpt suggested adding a timeout, which I previously did
         # thing is that when the call succeeds it doesn't take 3 seconds
         # but with only two jobs runniong a lot of lag occurs.
         
-        return {'stdout':result.stdout, 'stderr':result.stderr, 'returncode':result.returncode}
+        res =  {'stdout':result.stdout, 'stderr':result.stderr, 'returncode':result.returncode}
     except subprocess.TimeoutExpired:
-        return {'stdout':'', 'stderr':'Process Timeout', 'returncode': 255}
+        res =  {'stdout':'', 'stderr':'Process Timeout', 'returncode': 255}
+
+    ended = time.time()
+    
+    res['totaltime'] = ended - started
+    
+    return res
 
 
 if __name__=="__main__":

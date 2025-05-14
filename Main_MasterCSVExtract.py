@@ -366,7 +366,7 @@ SkipExtract = True
 jobLimit = 2
 
 # To allow skipping of files to make the process start faster
-startatkmz = 4
+startatkmz = 5
 
 # Limit the number of queued items
 queueLimit = 100
